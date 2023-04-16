@@ -1,8 +1,9 @@
 import { List, ActionPanel, Action } from "@raycast/api";
 import { useEffect, useState } from "react";
 import { readdir, stat } from "fs/promises";
-import { join, resolve, basename } from "path";
+import { join, resolve, basename, extname } from "path";
 import { PathLike } from "fs";
+import { fileTypeColors, fileTypeIcons } from "./utils";
 
 interface Download {
   name: string;
@@ -46,7 +47,13 @@ export default function RecentDownloads() {
     );
   }
 
-  const markdown = `![Image](download.path)`;
+  function getFileTypeIcon(fileExtension: string): string {
+    return fileTypeIcons[fileExtension.toLowerCase()] ?? fileTypeIcons["default"];
+  }
+
+  function getFileTypeColor(fileExtension: string): string {
+    return fileTypeColors[fileExtension.toLowerCase()] ?? fileTypeColors["default"];
+  }
 
   return (
     <List isShowingDetail searchBarPlaceholder="Filter files...">
@@ -54,20 +61,20 @@ export default function RecentDownloads() {
         <List.Item
           key={download.path}
           title={download.name}
-          icon={{ fileIcon: download.path }}
           quickLook={{ path: download.path, name: download.name }}
-          subtitle={download.path}
           detail={
             <List.Item.Detail
               markdown={`![Image](${download.path})`}
               metadata={
                 <List.Item.Detail.Metadata>
+                  <List.Item.Detail.Metadata.Label title="Title" text={`${download.name} `} />
+
                   <List.Item.Detail.Metadata.Label title="Size" text={`${(download.size / 1024).toFixed(2)} KB`} />
+                  <List.Item.Detail.Metadata.Separator />
                   <List.Item.Detail.Metadata.Label
                     title="Last Modified"
                     text={download.lastModifiedAt.toLocaleString()}
                   />
-
                   <List.Item.Detail.Metadata.Label title="Location" text={download.path} />
                 </List.Item.Detail.Metadata>
               }
