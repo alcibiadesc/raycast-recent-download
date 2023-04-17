@@ -1,49 +1,48 @@
-export const fileTypeIcons = {
-  ".pdf": "filetype/pdf.png",
-  ".doc": "filetype/word.png",
-  ".docx": "filetype/word.png",
-  ".xls": "filetype/excel.png",
-  ".xlsx": "filetype/excel.png",
-  ".ppt": "filetype/powerpoint.png",
-  ".pptx": "filetype/powerpoint.png",
-  ".png": "filetype/image.png",
-  ".jpg": "filetype/image.png",
-  ".jpeg": "filetype/image.png",
-  ".gif": "filetype/image.png",
-  ".mp4": "filetype/video.png",
-  ".mov": "filetype/video.png",
-  ".avi": "filetype/video.png",
-  ".mp3": "filetype/audio.png",
-  ".wav": "filetype/audio.png",
-  ".flac": "filetype/audio.png",
-  ".zip": "filetype/archive.png",
-  ".rar": "filetype/archive.png",
-  ".7z": "filetype/archive.png",
-  ".txt": "filetype/text.png",
-  default: "filetype/unknown.png",
-};
+import { promises as fs } from "fs";
+import { existsSync } from "fs";
+import { join } from "path";
+import { FileTypeColors, FileTypeIcons } from "./fileTypes";
 
-export const fileTypeColors = {
-  ".pdf": "#FF4500",
-  ".doc": "#2D7BB6",
-  ".docx": "#2D7BB6",
-  ".xls": "#2D7BB6",
-  ".xlsx": "#2D7BB6",
-  ".ppt": "#B63700",
-  ".pptx": "#B63700",
-  ".png": "#FF69B4",
-  ".jpg": "#FF69B4",
-  ".jpeg": "#FF69B4",
-  ".gif": "#FF69B4",
-  ".mp4": "#1A73E8",
-  ".mov": "#1A73E8",
-  ".avi": "#1A73E8",
-  ".mp3": "#C48",
-  ".wav": "#C48",
-  ".flac": "#C48",
-  ".zip": "#FFA500",
-  ".rar": "#FFA500",
-  ".7z": "#FFA500",
-  ".txt": "#696969",
-  default: "#696969",
-};
+export interface Download {
+  path: string;
+  name: string;
+  size: number;
+  lastModifiedAt: Date;
+}
+
+export async function getRecentDownloads(downloadsPath: string): Promise<Download[]> {
+  const files = await fs.readdir(downloadsPath);
+  const downloads: Download[] = [];
+
+  for (const file of files) {
+    const path = join(downloadsPath, file);
+    const stats = await fs.stat(path);
+    if (!stats.isDirectory()) {
+      downloads.push({
+        path,
+        name: file,
+        size: stats.size,
+        lastModifiedAt: new Date(stats.mtimeMs),
+      });
+    }
+  }
+
+  return downloads;
+}
+
+export function getFileTypeIcon(fileExtension: string): string {
+  const iconName = FileTypeIcons[fileExtension] ?? "default";
+  const iconPath = join(__dirname, "assets", "filetype-icon", `${iconName}.png`);
+
+  if (existsSync(iconPath)) {
+    return iconPath;
+  } else {
+    console.warn(`Icon not found for file extension: ${fileExtension}. Using default icon.`);
+    const defaultIconPath = join(__dirname, "assets", "filetype-icon", "_page.png");
+    return defaultIconPath;
+  }
+}
+
+export function getFileTypeColor(fileExtension: string): string {
+  return FileTypeColors[fileExtension] ?? "#999999";
+}

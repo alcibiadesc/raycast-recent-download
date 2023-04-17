@@ -1,37 +1,16 @@
-import { List, ActionPanel, Action } from "@raycast/api";
+import { List, ActionPanel, Action, Detail } from "@raycast/api";
 import { useEffect, useState } from "react";
-import { readdir, stat } from "fs/promises";
-import { join, resolve, basename, extname } from "path";
+import { resolve, extname } from "path";
 import { PathLike } from "fs";
-import { fileTypeColors, fileTypeIcons } from "./utils";
-
-interface Download {
-  name: string;
-  path: string;
-  size: number;
-  lastModifiedAt: Date;
-}
+import { getRecentDownloads, Download, getFileTypeIcon, getFileTypeColor } from "./utils";
 
 export default function RecentDownloads() {
   const [downloads, setDownloads] = useState<Download[]>([]);
+  const [selectedDownload, setSelectedDownload] = useState<Download | null>(null);
 
   useEffect(() => {
-    getRecentDownloads();
-  }, []);
-
-  async function getRecentDownloads() {
     const downloadsPath = resolve(process.env.HOME || "", "Downloads");
-    const files = await readdir(downloadsPath);
-    const downloads = files
-      .filter((file) => !file.startsWith("."))
-      .map(async (file) => {
-        const filePath = join(downloadsPath, file);
-        const fileStats = await stat(filePath);
-        const size = fileStats.size;
-        const lastModifiedAt = fileStats.mtime;
-        return { name: basename(filePath), path: filePath, size, lastModifiedAt };
-      });
-    Promise.all(downloads)
+    getRecentDownloads(downloadsPath)
       .then((downloads) => {
         downloads.sort((a, b) => b.lastModifiedAt.getTime() - a.lastModifiedAt.getTime());
         setDownloads(downloads);
@@ -39,7 +18,7 @@ export default function RecentDownloads() {
       .catch((error) => {
         console.error("Sorry, Error get recent files", error);
       });
-  }
+  }, []);
 
   function handleTrash(paths: PathLike | PathLike[]) {
     setDownloads((downloads) =>
@@ -47,66 +26,69 @@ export default function RecentDownloads() {
     );
   }
 
-  function getFileTypeIcon(fileExtension: string): string {
-    return fileTypeIcons[fileExtension.toLowerCase()] ?? fileTypeIcons["default"];
-  }
+  if (selectedDownload) {
+    const fileExtension = extname(selectedDownload.name);
+    const icon = getFileTypeIcon(fileExtension);
+    const color = getFileTypeColor(fileExtension);
 
-  function getFileTypeColor(fileExtension: string): string {
-    return fileTypeColors[fileExtension.toLowerCase()] ?? fileTypeColors["default"];
+    return (
+      <Detail
+        navigationTitle={selectedDownload.name}
+        metadata={
+          <Detail.Metadata>
+            <Detail.Metadata.Label title="File Type" text={fileExtension} icon={{ source: icon, tintColor: color }} />
+          </Detail.Metadata>
+        }
+      />
+    );
   }
 
   return (
     <List isShowingDetail searchBarPlaceholder="Filter files...">
-      {downloads.map((download) => (
-        <List.Item
-          key={download.path}
-          title={download.name}
-          quickLook={{ path: download.path, name: download.name }}
-          detail={
-            <List.Item.Detail
-              markdown={`![Image](${download.path})`}
-              metadata={
-                <List.Item.Detail.Metadata>
-                  <List.Item.Detail.Metadata.Label title="Title" text={`${download.name} `} />
+      {downloads.map((download) => {
+        const fileExtension = extname(download.name);
+        const icon = getFileTypeIcon(fileExtension);
+        const color = getFileTypeColor(fileExtension);
 
-                  <List.Item.Detail.Metadata.Label title="Size" text={`${(download.size / 1024).toFixed(2)} KB`} />
-                  <List.Item.Detail.Metadata.Separator />
-                  <List.Item.Detail.Metadata.Label
-                    title="Last Modified"
-                    text={download.lastModifiedAt.toLocaleString()}
-                  />
-                  <List.Item.Detail.Metadata.Label title="Location" text={download.path} />
-                </List.Item.Detail.Metadata>
-              }
-            />
-          }
-          actions={
-            <ActionPanel>
-              <Action.Open title="Open File" target={download.path} />
-              <Action.CopyToClipboard
-                title="Copy File"
-                content={{ file: download.path }}
-                shortcut={{ modifiers: ["cmd"], key: "enter" }}
-              />
-              <Action.ShowInFinder shortcut={{ modifiers: ["cmd"], key: "o" }} path={download.path} />
+        function getPreview(filePath: string, fileExtension: string) {
+          const imageExtensions = [".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp"];
 
-              <Action.ToggleQuickLook title="Preview File" shortcut={{ modifiers: ["cmd"], key: "y" }} />
-              <Action.Trash
-                title="Delete File"
-                paths={[download.path]}
-                shortcut={{ modifiers: ["cmd"], key: "backspace" }}
-                onTrash={handleTrash}
-              />
-              <Action.Trash
-                title="Delete All"
-                paths={downloads.map((download) => download.path)}
-                shortcut={{ modifiers: ["cmd", "shift"], key: "backspace" }}
-                onTrash={() => setDownloads([])}
-              />
-            </ActionPanel>
+          if (imageExtensions.includes(fileExtension)) {
+            return `<img src="${filePath}" alt="Image" width="300" />`;
+          } else {
+            const icon = getFileTypeIcon(fileExtension);
+
+            return `<img src="${icon}" alt="Image" height="150" />`;
           }
-        />
-      ))}
+        }
+
+        return (
+          <List.Item
+            key={download.path}
+            title={download.name}
+            quickLook={{ path: download.path, name: download.name }}
+            detail={
+              <List.Item.Detail
+                markdown={getPreview(download.path, fileExtension)}
+                metadata={
+                  <List.Item.Detail.Metadata>
+                    <List.Item.Detail.Metadata.Label title="Title" text={`${download.name} `} />
+                    <List.Item.Detail.Metadata.Label title="File Type" icon={icon} text={fileExtension} color={color} />
+                    <List.Item.Detail.Metadata.Label title="Size" text={`${(download.size / 1024).toFixed(2)} KB`} />
+                    <List.Item.Detail.Metadata.Separator />
+                    <List.Item.Detail.Metadata.Label
+                      title="Last Modified"
+                      text={download.lastModifiedAt.toLocaleString()}
+                    />
+                    <List.Item.Detail.Metadata.Label title="Location" text={download.path} />
+                  </List.Item.Detail.Metadata>
+                }
+              />
+            }
+            actions={<ActionPanel>{/* ActionPanel content */}</ActionPanel>}
+          />
+        );
+      })}
     </List>
   );
 }
