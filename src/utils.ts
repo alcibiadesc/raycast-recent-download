@@ -1,6 +1,5 @@
 import { promises as fs } from "fs";
 import { join } from "path";
-import { FileTypeColors, FileTypeIcons } from "./fileTypes";
 
 export interface Download {
   path: string;
@@ -38,21 +37,12 @@ export function getFileExtension(filename: string): string {
 }
 
 export async function getFileTypeIcon(fileExtension: string): Promise<string> {
-  const iconName = FileTypeIcons[fileExtension] ?? "default";
-  const iconPath = join(__dirname, "assets", "filetype-icon", `${iconName}.png`);
-
-  try {
-    await fs.access(iconPath);
-    return iconPath;
-  } catch (error) {
-    console.warn(`Icon not found for file extension: ${fileExtension}. Using default icon.`);
-    const defaultIconPath = join(__dirname, "assets", "filetype-icon", "_page.png");
-    return defaultIconPath;
+  const imageExtensions = ["jpg", "jpeg", "png", "gif", "webp", "bmp", "tiff", "svg"];
+  if (imageExtensions.includes(fileExtension.toLowerCase())) {
+    return "image";
+  } else {
+    return "";
   }
-}
-
-export function getFileTypeColor(fileExtension: string): string {
-  return FileTypeColors[fileExtension] ?? "#999999";
 }
 
 export function formatBytes(bytes: number, decimals = 2): string {
