@@ -121,7 +121,8 @@ export default function RecentDownloads() {
                 metadata={
                   <List.Item.Detail.Metadata>
                     <List.Item.Detail.Metadata.Label title="Title" text={`${download.name} `} />
-                    <List.Item.Detail.Metadata.Label title="File Type" text={fileExtension} icon={icon} />
+
+                    <List.Item.Detail.Metadata.Label title="File Type" text={fileExtension} icon={download.icon} />
                     <List.Item.Detail.Metadata.Label title="Size" text={formatBytes(download.size)} />
                     <List.Item.Detail.Metadata.Separator />
                     <List.Item.Detail.Metadata.Label

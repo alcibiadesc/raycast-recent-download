@@ -7,6 +7,7 @@ export interface Download {
   name: string;
   size: number;
   lastModifiedAt: Date;
+  icon: string;
 }
 
 export async function getRecentDownloads(downloadsPath: string): Promise<Download[]> {
@@ -16,17 +17,24 @@ export async function getRecentDownloads(downloadsPath: string): Promise<Downloa
   for (const file of files) {
     const path = join(downloadsPath, file);
     const stats = await fs.stat(path);
+    const fileExtension = getFileExtension(file);
+    const icon = await getFileTypeIcon(fileExtension);
     if (!stats.isDirectory()) {
       downloads.push({
         path,
         name: file,
         size: stats.size,
         lastModifiedAt: new Date(stats.mtimeMs),
+        icon,
       });
     }
   }
 
   return downloads;
+}
+
+export function getFileExtension(filename: string): string {
+  return filename.slice((Math.max(0, filename.lastIndexOf(".")) || Infinity) + 1);
 }
 
 export async function getFileTypeIcon(fileExtension: string): Promise<string> {
@@ -37,7 +45,7 @@ export async function getFileTypeIcon(fileExtension: string): Promise<string> {
     await fs.access(iconPath);
     return iconPath;
   } catch (error) {
-    // No warning will be shown if the icon is not found, and the default icon will be used silently
+    console.warn(`Icon not found for file extension: ${fileExtension}. Using default icon.`);
     const defaultIconPath = join(__dirname, "assets", "filetype-icon", "_page.png");
     return defaultIconPath;
   }
