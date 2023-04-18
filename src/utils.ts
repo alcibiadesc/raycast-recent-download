@@ -1,5 +1,4 @@
 import { promises as fs } from "fs";
-import { existsSync } from "fs";
 import { join } from "path";
 import { FileTypeColors, FileTypeIcons } from "./fileTypes";
 
@@ -30,14 +29,15 @@ export async function getRecentDownloads(downloadsPath: string): Promise<Downloa
   return downloads;
 }
 
-export function getFileTypeIcon(fileExtension: string): string {
+export async function getFileTypeIcon(fileExtension: string): Promise<string> {
   const iconName = FileTypeIcons[fileExtension] ?? "default";
   const iconPath = join(__dirname, "assets", "filetype-icon", `${iconName}.png`);
 
-  if (existsSync(iconPath)) {
+  try {
+    await fs.access(iconPath);
     return iconPath;
-  } else {
-    console.warn(`Icon not found for file extension: ${fileExtension}. Using default icon.`);
+  } catch (error) {
+    // No warning will be shown if the icon is not found, and the default icon will be used silently
     const defaultIconPath = join(__dirname, "assets", "filetype-icon", "_page.png");
     return defaultIconPath;
   }

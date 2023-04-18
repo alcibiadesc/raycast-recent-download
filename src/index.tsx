@@ -88,6 +88,8 @@ export default function RecentDownloads() {
     }
   }
 
+  const hiddenFilesInfo = getHiddenFilesInfo();
+
   return (
     <List isShowingDetail searchBarPlaceholder="Filter files...">
       {downloads.map((download) => {
@@ -135,9 +137,9 @@ export default function RecentDownloads() {
               <ActionPanel>
                 <Action.Open title="Open File" target={download.path} />
                 <Action
-                  title={getHiddenFilesInfo().text}
-                  icon={getHiddenFilesInfo().icon}
-                  shortcut={{ modifiers: ["cmd"], key: "h" }}
+                  title={hiddenFilesInfo.text}
+                  icon={hiddenFilesInfo.icon}
+                  shortcut={{ modifiers: ["shift"], key: "i" }}
                   onAction={toggleHiddenFiles}
                 />
                 <Action.CopyToClipboard
