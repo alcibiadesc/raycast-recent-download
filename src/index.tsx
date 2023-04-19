@@ -118,12 +118,13 @@ export default function RecentDownloads() {
             }
             actions={
               <ActionPanel>
+                <Action.Open title="Open File" target={download.path} />
+
                 <Action.CopyToClipboard
                   title="Copy File"
                   content={{ file: download.path }}
                   shortcut={{ modifiers: ["cmd"], key: "enter" }}
                 />
-                <Action.Open title="Open File" target={download.path} />
                 <Action
                   title={hiddenFilesInfo.text}
                   icon={hiddenFilesInfo.icon}
