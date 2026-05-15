@@ -7,3 +7,10 @@
 .DS_Store
 
 TO-DO.md
+
+# logs
+*-logs.txt
+
+# macOS Finder duplicates (e.g. "tsconfig 2.json")
+* 2.*
+* 2
