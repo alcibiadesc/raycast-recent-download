@@ -54,19 +54,45 @@
       "description": "Select an additional folder to display recently downloaded files.",
       "type": "directory",
       "required": false
+    },
+    {
+      "name": "includeFolders",
+      "title": "Folders",
+      "label": "Include folders in results",
+      "description": "Show folders alongside files (allows deleting folders too).",
+      "type": "checkbox",
+      "required": false,
+      "default": true
+    },
+    {
+      "name": "computeFolderSize",
+      "title": "Folder Size",
+      "label": "Compute recursive folder size",
+      "description": "Calculate total size of each folder (slower for large folders).",
+      "type": "checkbox",
+      "required": false,
+      "default": false
+    },
+    {
+      "name": "maxItems",
+      "title": "Max Items",
+      "description": "Maximum number of items to display (for performance).",
+      "type": "textfield",
+      "required": false,
+      "default": "200"
     }
   ],
   "dependencies": {
-    "@raycast/api": "^1.49.3",
-    "@raycast/utils": "^1.5.2"
+    "@raycast/api": "1.104.17",
+    "@raycast/utils": "2.2.4"
   },
   "devDependencies": {
     "@raycast/eslint-config": "1.0.5",
-    "@types/node": "18.8.3",
-    "@types/react": "18.0.9",
+    "@types/node": "25.8.0",
+    "@types/react": "19.2.14",
     "eslint": "^7.32.0",
     "prettier": "^2.5.1",
-    "typescript": "^4.4.3"
+    "typescript": "6.0.3"
   },
   "scripts": {
     "build": "ray build -e dist",
