@@ -79,14 +79,24 @@ export default function RecentDownloads() {
       const results = await Promise.all(
         foldersArg.map(async (folder) => {
           try {
-            return await getRecentItems(folder, { includeFolders, computeFolderSize });
+            const items = await getRecentItems(folder, { includeFolders, computeFolderSize });
+            return { folder, items, error: null as string | null };
           } catch (err) {
+            const message = err instanceof Error ? err.message : String(err);
             console.error(`Error reading ${folder}:`, err);
-            return [];
+            return { folder, items: [] as DownloadItem[], error: message };
           }
         })
       );
-      return results.flat();
+      const errors = results.filter((r) => r.error);
+      if (errors.length > 0) {
+        await showToast({
+          style: Toast.Style.Failure,
+          title: `Failed to read ${errors.length} folder(s)`,
+          message: errors.map((e) => `${e.folder}: ${e.error}`).join("\n"),
+        });
+      }
+      return results.flatMap((r) => r.items);
     },
     [folders]
   );
@@ -284,7 +294,11 @@ export default function RecentDownloads() {
         <List.EmptyView
           icon={Icon.Tray}
           title="No items"
-          description="No files or folders match your filters."
+          description={
+            folders.length === 0
+              ? "No folders configured. Open extension preferences (⌘,) and set Folder 1."
+              : `Reading: ${folders.join(", ")}\nNo files or folders match your filters.`
+          }
         />
       ) : grouped ? (
         grouped.map((g) => (
